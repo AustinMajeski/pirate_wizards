@@ -83,6 +83,7 @@ def log ( title, logs=[] )
         puts output + " ]"
       elsif w.kind_of?(Hash)
         keys = collect_recursive_keys( w )
+        values = []
         pretty_hash = JSON.pretty_generate(w).gsub(":", " =>").gsub("\n","\n#{SPACE}").gsub("},", "},\n")
         keys.each { |k| pretty_hash.gsub!( "\"#{k}\" =>",":#{k} =>") }
         puts "#{SPACE}#{pretty_hash}"
@@ -107,6 +108,27 @@ def collect_recursive_keys ( hash_in, keys=[] )
 end
 
 
+def collect_recursive_classes ( hash_in, values=[] )
+
+  values.concat( hash_in.values ).uniq!
+  hash_in.each { |v| 
+    if v[1].kind_of?(Hash)
+      values.concat( collect_recursive_classes( v[1], values ) ).uniq!
+    end
+  }
+
+  classes = []
+  values.each { |c|
+    puts "\n - #{c.to_s}"
+    if c.kind_of?(Class)
+      classess << "<#{c.to_s}>"
+    end
+  }
+
+  return classes
+end
+
+
 
 puts "\n" + BLUE_BACKGROUND + WHITE_TEXT + "\n\n\n\n"
 #/// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -117,7 +139,7 @@ puts "\n" + BLUE_BACKGROUND + WHITE_TEXT + "\n\n\n\n"
 
 my_hash = {:hello => "goodbye", :goob => 77, :keyhole => true}
 my_internal_hash = {:hello => "goodbye", :goob => 77, :H => { :L => "poop", :D => 8 }, :keyhole => true}
-dimentional_hash = {:one => {:two => {:three => {:four => {:five => "end", :f => "five"}}}}}
+dimentional_hash = {:one => {:two => {:pp => 3, :three => {:four => {:five => "end", :f => "five"}}}}}
 
 log(  "Hippo", 
 [
@@ -135,6 +157,7 @@ log(  "Hippo",
 # =end
 
 
+#puts collect_recursive_classes( my_internal_hash )
 
 
 # =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*= =*=
@@ -497,7 +520,7 @@ end
 
 #  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /
 
-continue = "Yes" # Yes
+continue = "no" # Yes
 
 while /Yes/i.match( continue )
     Log_Visits.clear
@@ -511,11 +534,42 @@ end
 puts "\n\n\n"
 puts Ship.kind_of?(Class)
 puts Ship.to_s
+puts "\n\n"
+
+butt = Ship.new
+hasery = {}
+print "HASH:  "
+puts hasery.kind_of?(Object)
+puts hasery.class
+puts hasery.instance_of? hasery.class
+print "Class? "
+puts hasery.kind_of?(Class)
+
+puts "\n\nShip"
+puts butt.kind_of?(Class)
+puts butt.instance_of? butt.class
+puts butt.class
+print "Defined?  "
+puts defined?(butt)
+#print "classs?  "
+#puts #class?(butt)
 puts "\n\n\n"
+
+
+Player.move
+Log_Visits.log( Gameplay.sea_event )
+Player.move
+Log_Visits.log( Gameplay.sea_event )
+
+
+puts collect_recursive_classes( Log_Visits.get_visited )
+
 
 log(  "Tiles Visited",
   [
-      Log_Visits.get_visited
+      Log_Visits.get_visited,
+      "", "",
+      collect_recursive_classes( Log_Visits.get_visited )
   ])
 
 puts "\n\nbye bye\n\n"
@@ -530,5 +584,4 @@ puts "\n\nbye bye\n\n"
 
 
 puts "\n\n\n"
-# EOF
 # EOF
