@@ -51,81 +51,88 @@ puts "\n\n\n"
 =end
 
 
+require 'json'
 
-=begin
-/// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- LINE              =   "_____________________________________________________"
+#/// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ LENGTH            =  55
+ LINE              =   "_" * LENGTH
+ BLOCK             =   Integer("0x2588").chr("UTF-8")
+ BLOCK_LINE        =   BLOCK * LENGTH
  SPACE             =   "    "
- ESC               =   String.fromCharCode(033)
- BLUE_BACKGROUND   =   ""//ESC+"[48;5;217m"
+ ESC               =   27.chr
+ BLUE_BACKGROUND   =   ""#ESC+"[48;5;217m"
  WHITE_BACKGROUND  =   ESC+"[48;5;15m"
- WHITE_TEXT        =   ""//ESC+"[38;5;15m"
+ WHITE_TEXT        =   ""#ESC+"[38;5;15m"
  FORMAT_RESET      =   ESC+"[0m"
 
-function log() { 
-    console.log(`#{BLUE_BACKGROUND} #{WHITE_BACKGROUND}#{LINE}#{FORMAT_RESET}#{BLUE_BACKGROUND}\n\n#{SPACE}#{arguments[0]}\n #{LINE}\n\n`)
-    let Args = Array.from( arguments ).splice(1)
-    Args.forEach( out => {
-        if ( Array.isArray( out ) ){
-            let outputArrayText = SPACE + "[ "
-            out.forEach( (v,i) => {
-                if ( i < out.length-1 )  { outputArrayText += `#{v}, ` }
-                else  { outputArrayText += v }  
-            } )
-            console.log( outputArrayText += " ]" )
+def log ( title, logs=[] )  
+    puts "#{BLUE_BACKGROUND} #{WHITE_BACKGROUND}#{BLOCK_LINE}#{FORMAT_RESET}#{BLUE_BACKGROUND}\n\n#{SPACE}#{title}\n #{LINE}\n\n\n"
+
+    logs.each { |w| 
+      if w.kind_of?(Array)
+        output = SPACE + "[ "
+        index = 0
+        w.each { |v|
+           if  index < w.length - 1 
+                output += "#{v}, "
+                index += 1
+           else
+                output += v.to_s 
+           end  
         }
-        else{ console.log( SPACE + out ) }
-    } )
-    console.log(`\n #{LINE}\n #{LINE}\n\n\n`)
-}
-console.log("\n" + BLUE_BACKGROUND + WHITE_TEXT + "\n\n\n\n")
-/// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-=end
+        puts output + " ]"
+      elsif w.kind_of?(Hash)
+        keys = collect_recursive_keys( w )
+        pretty_hash = JSON.pretty_generate(w).gsub(":", " =>").gsub("\n","\n#{SPACE}").gsub("},", "},\n")
+        keys.each { |k| pretty_hash.gsub!( "\"#{k}\" =>",":#{k} =>") }
+        puts "#{SPACE}#{pretty_hash}"
+      else
+        puts SPACE + w.to_s 
+      end
+      
+    }
+    puts "\n #{LINE}\n #{LINE}\n\n\n"
+end
 
 
 
+def collect_recursive_keys ( hash_in, keys=[] )
+  keys.concat( hash_in.keys ).uniq!
+  hash_in.each { |v| 
+    if v[1].kind_of?(Hash)
+      keys.concat( collect_recursive_keys( v[1], keys ) ).uniq!
+    end
+  }
+  return keys
+end
 
 
 
-# #/// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#  LINE              =   "_____________________________________________________"
-#  SPACE             =   "    "
-#  ESC               =   27.chr
-#  BLUE_BACKGROUND   =   ""#ESC+"[48;5;217m"
-#  WHITE_BACKGROUND  =   ESC+"[48;5;15m"
-#  WHITE_TEXT        =   ""#ESC+"[38;5;15m"
-#  FORMAT_RESET      =   ESC+"[0m"
-
-# def log ( title, logs )  
-#     puts '#{BLUE_BACKGROUND} #{WHITE_BACKGROUND}#{LINE}#{FORMAT_RESET}#{BLUE_BACKGROUND}\n\n#{SPACE}#{arguments[0]}\n #{LINE}\n\n'
-#     let Args = Array.from( arguments ).splice(1)
-#     Args.forEach( out => {
-#         if ( Array.isArray( out ) ){
-#             let outputArrayText = SPACE + "[ "
-#             out.forEach( (v,i) => {
-#                 if  i < out.length-1   
-#                      outputArrayText += '#{v}, ' 
-#                 else
-#                      outputArrayText += v 
-#                 end  
-#             } )
-#             puts  outputArrayText += " ]" 
-#         }
-#         else
-#              puts SPACE + out 
-#         end
-#     } )
-#     puts '\n #{LINE}\n #{LINE}\n\n\n'
-# end
-# puts "\n" + BLUE_BACKGROUND + WHITE_TEXT + "\n\n\n\n"
-# #/// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+puts "\n" + BLUE_BACKGROUND + WHITE_TEXT + "\n\n\n\n"
+#/// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
+# =begin
+##       log function testing
 
+my_hash = {:hello => "goodbye", :goob => 77, :keyhole => true}
+my_internal_hash = {:hello => "goodbye", :goob => 77, :H => { :L => "poop", :D => 8 }, :keyhole => true}
+dimentional_hash = {:one => {:two => {:three => {:four => {:five => "end", :f => "five"}}}}}
 
-
-
-
+log(  "Hippo", 
+[
+      "Value",
+      "Goob",
+      [1,23,45,6],
+      my_hash,
+      true,
+      my_internal_hash,
+      "I herby delare!...",
+      "",
+      dimentional_hash,
+      ""
+])
+# =end
 
 
 
@@ -178,19 +185,15 @@ class Player
         while valid_direction == false
             case direction
                 when /North|Up/i # North
-                    # puts "North"
                     @@posY += 1
                     valid_direction = true
                 when /South|Down/i  # South
-                    # puts "South"
                     @@posY -= 1
                     valid_direction = true
                 when /East|Right/i  # East
-                    # puts "East"
                     @@posX += 1
                     valid_direction = true
-                when /West|Left/i  #
-                    # puts "West"
+                when /West|Left/i  # West
                     @@posX -= 1
                     valid_direction = true
                 else
@@ -342,6 +345,11 @@ class Log_Visits
 
     #  -  -  -  -  -  -  -  -  -  -  -  -  -
 
+    def self.clear
+      @@tiles_visited = {}
+    end
+
+
     def self.log  ( obj )        # change to hash stuff
 
         if Log_Visits.populated?
@@ -489,14 +497,27 @@ end
 
 #  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /  / /
 
-continue = "Yes"
+continue = "Yes" # Yes
 
 while /Yes/i.match( continue )
+    Log_Visits.clear
     Gameplay.start
     print "\n\nDo you want to restart?   "
     continue = gets.chomp
     puts "\n\n\n"
 end
+
+
+puts "\n\n\n"
+puts Ship.kind_of?(Class)
+puts Ship.to_s
+puts "\n\n\n"
+
+log(  "Tiles Visited",
+  [
+      Log_Visits.get_visited
+  ])
+
 puts "\n\nbye bye\n\n"
 
 
@@ -507,5 +528,7 @@ puts "\n\nbye bye\n\n"
 
 
 
+
 puts "\n\n\n"
+# EOF
 # EOF
